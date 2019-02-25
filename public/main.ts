@@ -11,25 +11,6 @@ var config = {
 };
 
 firebase.initializeApp(config);
-const firestore : any = firebase.firestore();
-
-//GLOBALS START
-const gameRootCol : string = 'ChirpyGamesRoot';
-    const quizGameDoc : string = 'QuizGame';
-        const quizzesCol : string = 'quizzes';
-            const quizDataDoc : string = 'quizData';
-            const quizCountDoc : string = 'quizCount';
-        const tmpDataCol : string = 'tmpDataCol';
-            const tmpDataDoc : string = 'tmpData';
-
-function getQuizGameDoc() {return firestore.collection(gameRootCol).doc(quizGameDoc);}
-function getQuizzesCol() {return getQuizGameDoc().collection(quizzesCol);}
-function getCurrentQuizDoc(quizNum: number) {return getQuizzesCol().doc(String(quizNum));}
-function getQuizDataDoc(quizNum : number) {return getCurrentQuizDoc(quizNum).collection('quiz').doc(quizDataDoc);}
-function getCurrentQuizCol(quizNum : number) {return getCurrentQuizDoc(quizNum).collection('quiz');}
-function getQuizCountDoc() {return getQuizzesCol().doc(quizCountDoc);}
-function getTmpDataDoc() {return getQuizGameDoc().collection(tmpDataCol).doc(tmpDataDoc);}
-//GLOBALS END
 
 const uploadStatus : HTMLElement = document.getElementById("uploadStatus");
 const progressBar : HTMLProgressElement = document.getElementById("progressBar") as HTMLProgressElement;
@@ -54,16 +35,18 @@ function enableUploadButton() {
 
 function writeTmpData() {
     //Writes data relevant to the quiz session to a public document, for processing server side.
-    let quizTimeVal = quizTimeSelector.value;
-    let questionLengthVal = questionLength.value;
-    let debriefLengthVal = debriefLength.value;
+    let questionLengthVal : string = questionLength.value;
+    let debriefLengthVal : string = debriefLength.value;
+    let quizTimeVal : any = quizTimeSelector.value;
+    let quizDateObj : Date = new Date(quizTimeVal);
     
-    let tmpData = {tmpTimeText: quizTimeVal,
-                  tmpQuestionLength: questionLengthVal,
-                  tmpDebriefLength: debriefLengthVal};
+    let tmpData = {timeText: quizDateObj.getTime(),
+                  questionLength: questionLengthVal,
+                  debriefLength: debriefLengthVal};
    
-    return getTmpDataDoc().set(tmpData)
-                          .catch(e => console.log(e));
+    return firebase.firestore().collection('ChirpyGamesRoot').doc('QuizGame').collection('tmpDataCol').doc('tmpData')
+            .set(tmpData)
+            .catch(e => console.log(e));
 }
 
 function uploadFile(storageRef : any, file : any, csvFile : boolean) {

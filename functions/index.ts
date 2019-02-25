@@ -1,96 +1,86 @@
-import { Question } from "./question";
-import { Readcsv } from "./readcsv";
+
+import { importQuiz } from "./importQuiz";
+import { QuizMngr } from "./QuizMngr";
+import { DB } from "./Firestore";
+import { iType } from "./QuizMngr";
 
 const admin : any = require('firebase-admin');
 const functions : any = require('firebase-functions');
-const {Storage} = require('@google-cloud/storage');
-const storageBucket = 'import-test-2-32c53.appspot.com';
+//Firestore is initialised below as a global variable to serve the whole application.
 
 // //LOCAL SERVE ONLY
-// const serviceAccount = require('./serviceAccountKey.json');
+// const serviceAccount = require('../functions/serviceAccountKey.json');
 // admin.initializeApp({credential: admin.credential.cert(serviceAccount)});
 
 //DEPLOY ONLY
 admin.initializeApp(functions.config().firebase);
 
-const firestore : any = admin.firestore();
-
-//GLOBALS START
-const gameRootCol : string = 'ChirpyGamesRoot';
-    const quizGameDoc : string = 'QuizGame';
-        const quizzesCol : string = 'quizzes';
-            const quizDataDoc : string = 'quizData';
-            const quizCountDoc : string = 'quizCount';
-        const tmpDataCol : string = 'tmpDataCol';
-            const tmpDataDoc : string = 'tmpData';
-
-function getQuizGameDoc() {return firestore.collection(gameRootCol).doc(quizGameDoc);}
-function getQuizzesCol() {return getQuizGameDoc().collection(quizzesCol);}
-function getCurrentQuizDoc(quizNum: number) {return getQuizzesCol().doc(String(quizNum));}
-function getQuizDataDoc(quizNum : number) {return getCurrentQuizDoc(quizNum).collection('quiz').doc(quizDataDoc);}
-function getCurrentQuizCol(quizNum : number) {return getCurrentQuizDoc(quizNum).collection('quiz');}
-function getQuizCountDoc() {return getQuizzesCol().doc(quizCountDoc);}
-function getTmpDataDoc() {return getQuizGameDoc().collection(tmpDataCol).doc(tmpDataDoc);}
-//GLOBALS END
-
-function loadQuestion(readcsv) { //Loads question data from one line in a CSV file.
-    let question : Question = new Question();
-
-    question.setQText(readcsv.getNextValue());
-    question.setImage(readcsv.getNextValue());
-    question.setAnswer(0, readcsv.getNextValue());
-    question.setAnswer(1, readcsv.getNextValue());
-    question.setAnswer(2, readcsv.getNextValue());
-    question.setAnswer(3, readcsv.getNextValue());
-    question.setCorrect(readcsv.getNextValue());
-    question.setDebrief(readcsv.getNextValue());
-
-    return question;
-}
-
-function importQuiz(csvFilePath : string) { //Imports all quiz data from the csv file into firestore
-    const storage : Storage = new Storage();
-    const bucket : any = storage.bucket(storageBucket);
-
-    bucket.file(csvFilePath).download( (error, contents) => { //Get the csv from storage
-        if (error) {console.log(error);} //Log any errors
-        else { //If successfully retrieve file...
-
-            const csvString : string = contents.toString(); //Put the raw csv file text into a string.
-            let readcsv : Readcsv = new Readcsv(csvString); //Initialise a Readcsv object to read the string.
-            readcsv.skipToNextLine(); //Skip the first line, which only has heading information.
-
-            getQuizCountDoc().get().then(quizCountDoc => { //Get the number of the next quiz.
-                let quizNum = quizCountDoc.data()['counter'];
-                let nextNum = quizNum + 1;
-                getQuizCountDoc().set({counter: nextNum}); //Increment and write the next value
-
-                for (var index = 0; !readcsv.eof(); index++) { //Until the end of the csv string...
-                    let question : Question = loadQuestion(readcsv); //load a question,
-                    getCurrentQuizCol(quizNum).doc('q' + index).set(question.getAsJSON()); //and write it to the appropriate question number.
-                }
-
-                getTmpDataDoc().get().then(snapshot => { //Get the relevant quiz data saved by the client
-                    getQuizDataDoc(quizNum).set(snapshot.data()); //Save this against the quiz number
-                    return true;
-                })
-                .catch(error => console.log(error));
-                return true;
-            })
-            .catch(error => console.log(error));
-        }
-        return true;
-    });
-
-}
+const firestore : any = admin.firestore(); //DB class is instantiated from the global firestore variables.
+const db = new DB(firestore); //Other classes are instantiated with the same instance of DB. This prevents firestore from being initialised multiple times.
+const quizMngr = new QuizMngr(db);
 
 exports.onStorageUpload = functions.storage.object().onFinalize(object => { //Triggered whenever a file is uploaded to storage...
     let filePath : string = object.name;
     if (filePath.startsWith("raw_quiz_data/")) { //If it is uploaded in the quiz data folder (for csv files)...
-        importQuiz(filePath); //import the quiz data from the file.
+        importQuiz(filePath, db); //import the quiz data from the file.
         return true;
     } else return false;
 
+});
+
+//The following functions are called by a client when it determines that the quiz data is out of date.
+//The server will confirm if this is the case, before updating data.
+//If this is not the case, the function call is unnecessary and an error will be logged.
+
+exports.loadNextQuiz = functions.https.onRequest((request, response) => { //Finds and loads the next quiz.
+    //NOTE: This function will not load the next quiz if it is called after the quiz was due to start. Thus, if all users are late to join the quiz session, then the quiz won't run.
+    db.quizGameDoc().collection('quizData').doc('active').get().then(quizDocSnap => {
+        let quizDoc = quizDocSnap.data();
+        let now = Date.now();
+        let sessionTimeout = quizDoc['sessionTimeout'];
+        if (now > sessionTimeout) { //Check that the current quiz has ended.
+            quizMngr.getNextQuiz().then(nextQuiz => { //If so, find the next quiz...
+                quizMngr.loadQuizData(nextQuiz); //and load relevant data.
+                return true;
+            }).catch(error => console.log(error));
+        } else console.log('loadNextQuiz() function call unnecessary');
+
+        return true;        
+    }).catch(error => console.log(error));
+    response.send('loadNextQuiz() done'); //TODO: REMOVE THIS - test code only
+});
+
+exports.updateQuestion = functions.https.onRequest(( request, response) => { //Updates the current question.
+    quizMngr.getInterval(iType.question).then(data => { //Get the current quiz and question number.
+        let quizNumber = data['quizNumber'];
+        let intervalNumber = data['intervalNumber'];
+        db.quizGameDoc().collection('quizData').doc('question').get().then(activeQuestionSnap => {
+            let questionNumber = activeQuestionSnap.data()['questionNumber'];
+            if (questionNumber !== intervalNumber) //Confirm that the current question is not current
+                quizMngr.loadQuestion(quizNumber, intervalNumber); //load the question.
+            else console.log('Error: updateQuestion() function call unnecessary');
+            return true;
+        }).catch(error => console.log(error));
+        return true;
+    }).catch(error => console.log(error));
+    response.send('updateQuestion() done'); //TODO: REMOVE THIS - test code only
+});
+
+exports.updateDebrief = functions.https.onRequest((request, response) => { //Updates the current debrief.
+    //This is functionally identical to the method above, but the nested subtle differences make it easier to repeat code than handle repeated code with promises.
+    quizMngr.getInterval(iType.debrief).then(data => {
+        let quizNumber = data['quizNumber'];
+        let intervalNumber = data['intervalNumber'];
+        db.quizGameDoc().collection('quizData').doc('debrief').get().then(activeDebriefSnap => {
+            let questionNumber = activeDebriefSnap.data()['questionNumber'];
+            if (questionNumber !== intervalNumber)
+                quizMngr.loadDebrief(quizNumber, intervalNumber);
+            else console.log('Error: updateDebrief() function call unnecessary');
+            return true;
+        }).catch(error => console.log(error));
+        return true;
+    }).catch(error => console.log(error));
+    response.send('updateDebrief() done'); //TODO: REMOVE THIS - test code only
 });
 
 export {} //Prevents project-level block-scoped variable errors

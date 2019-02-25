@@ -8,23 +8,6 @@ var config = {
     messagingSenderId: "261167122833"
 };
 firebase.initializeApp(config);
-var firestore = firebase.firestore();
-//GLOBALS START
-var gameRootCol = 'ChirpyGamesRoot';
-var quizGameDoc = 'QuizGame';
-var quizzesCol = 'quizzes';
-var quizDataDoc = 'quizData';
-var quizCountDoc = 'quizCount';
-var tmpDataCol = 'tmpDataCol';
-var tmpDataDoc = 'tmpData';
-function getQuizGameDoc() { return firestore.collection(gameRootCol).doc(quizGameDoc); }
-function getQuizzesCol() { return getQuizGameDoc().collection(quizzesCol); }
-function getCurrentQuizDoc(quizNum) { return getQuizzesCol().doc(String(quizNum)); }
-function getQuizDataDoc(quizNum) { return getCurrentQuizDoc(quizNum).collection('quiz').doc(quizDataDoc); }
-function getCurrentQuizCol(quizNum) { return getCurrentQuizDoc(quizNum).collection('quiz'); }
-function getQuizCountDoc() { return getQuizzesCol().doc(quizCountDoc); }
-function getTmpDataDoc() { return getQuizGameDoc().collection(tmpDataCol).doc(tmpDataDoc); }
-//GLOBALS END
 var uploadStatus = document.getElementById("uploadStatus");
 var progressBar = document.getElementById("progressBar");
 var uploadButton = document.getElementById("uploadButton");
@@ -45,13 +28,15 @@ function enableUploadButton() {
 }
 function writeTmpData() {
     //Writes data relevant to the quiz session to a public document, for processing server side.
-    var quizTimeVal = quizTimeSelector.value;
     var questionLengthVal = questionLength.value;
     var debriefLengthVal = debriefLength.value;
-    var tmpData = { tmpTimeText: quizTimeVal,
-        tmpQuestionLength: questionLengthVal,
-        tmpDebriefLength: debriefLengthVal };
-    return getTmpDataDoc().set(tmpData)["catch"](function (e) { return console.log(e); });
+    var quizTimeVal = quizTimeSelector.value;
+    var quizDateObj = new Date(quizTimeVal);
+    var tmpData = { timeText: quizDateObj.getTime(),
+        questionLength: questionLengthVal,
+        debriefLength: debriefLengthVal };
+    return firebase.firestore().collection('ChirpyGamesRoot').doc('QuizGame').collection('tmpDataCol').doc('tmpData')
+        .set(tmpData)["catch"](function (e) { return console.log(e); });
 }
 function uploadFile(storageRef, file, csvFile) {
     //Upload the file.
