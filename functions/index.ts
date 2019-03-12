@@ -32,8 +32,7 @@ exports.onStorageUpload = functions.storage.object().onFinalize(object => { //Tr
 //The server will confirm if this is the case, before updating data.
 //If this is not the case, the function call is unnecessary and an error will be logged.
 
-exports.loadNextQuiz = functions.https.onRequest((request, response) => { //Finds and loads the next quiz.
-    //NOTE: This function will not load the next quiz if it is called after the quiz was due to start. Thus, if all users are late to join the quiz session, then the quiz won't run.
+exports.loadNextQuiz = functions.https.onCall((data, context) => { //Finds and loads the next quiz.
     db.quizGameDoc().collection('quizData').doc('active').get().then(quizDocSnap => {
         let quizDoc = quizDocSnap.data();
         let now = Date.now();
@@ -47,10 +46,9 @@ exports.loadNextQuiz = functions.https.onRequest((request, response) => { //Find
 
         return true;        
     }).catch(error => console.log(error));
-    response.send('loadNextQuiz() done'); //TODO: REMOVE THIS - test code only
 });
 
-exports.updateQuestion = functions.https.onRequest(( request, response) => { //Updates the current question.
+exports.updateQuestion = functions.https.onCall((data, context) => { //Updates the current question.
     quizMngr.getInterval(iType.question).then(data => { //Get the current quiz and question number.
         let quizNumber = data['quizNumber'];
         let intervalNumber = data['intervalNumber'];
@@ -63,10 +61,9 @@ exports.updateQuestion = functions.https.onRequest(( request, response) => { //U
         }).catch(error => console.log(error));
         return true;
     }).catch(error => console.log(error));
-    response.send('updateQuestion() done'); //TODO: REMOVE THIS - test code only
 });
 
-exports.updateDebrief = functions.https.onRequest((request, response) => { //Updates the current debrief.
+exports.updateDebrief = functions.https.onCall((data, context) => { //Updates the current debrief.
     //This is functionally identical to the method above, but the nested subtle differences make it easier to repeat code than handle repeated code with promises.
     quizMngr.getInterval(iType.debrief).then(data => {
         let quizNumber = data['quizNumber'];
@@ -80,7 +77,29 @@ exports.updateDebrief = functions.https.onRequest((request, response) => { //Upd
         }).catch(error => console.log(error));
         return true;
     }).catch(error => console.log(error));
-    response.send('updateDebrief() done'); //TODO: REMOVE THIS - test code only
+});
+
+exports.submitAnswer = functions.https.onCall((data, context) => {
+    let quizNum : number = data['quiz'];
+    let questionNum : number = data['question'];
+    let answer : number = data['answer'];
+
+    if (context.auth) {
+        let uid : string = context.auth.uid;
+        let questionPromise = quizMngr.getInterval(iType.question);
+        let debriefPromise = quizMngr.getInterval(iType.debrief);
+        
+        questionPromise.then(questionInterval => {
+        debriefPromise.then(debriefInterval => {
+            if (questionInterval['quizNumber'] === quizNum &&
+                questionInterval['intervalNumber'] === questionNum &&
+                debriefInterval['intervalNumber'] !== questionNum) {
+                    quizMngr.postAnswer(quizNum, uid, questionNum, answer);
+            } else console.log('Error: submitAnswer() function call invalid');
+        return true;}).catch(error => console.log(error));
+        return true;}).catch(error => console.log(error));
+
+    } else console.log('Error: submitAnswer() - context.auth is undefined');
 });
 
 export {} //Prevents project-level block-scoped variable errors

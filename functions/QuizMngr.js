@@ -13,12 +13,12 @@ var QuizMngr = /** @class */ (function () {
         var nextQuizId = undefined;
         return this.db.quizzesCol().get().then(function (quizzesSnap) {
             var now = Date.now();
-            var timeOfNextQuiz = 2000000000000; //This creates a Y2.033K problem, we can't find quizzes after 2032.
+            var endOfNextQuiz = 2000000000000; //This creates a Y2.033K problem, we can't find quizzes after 2032.
             quizzesSnap.forEach(function (quizDoc) {
-                var timeOfThisQuiz = quizDoc.get('timeText');
-                if (timeOfThisQuiz > now && timeOfThisQuiz < timeOfNextQuiz) { //The next quiz must start after the current time and before any other quiz that's been found.
+                var endOfThisQuiz = quizDoc.get('sessionTimeout');
+                if (endOfThisQuiz > now && endOfThisQuiz < endOfNextQuiz) { //The next quiz must start after the current time and before any other quiz that's been found.
                     nextQuizId = quizDoc.id;
-                    timeOfNextQuiz = timeOfThisQuiz; //Every iteration of loop compares each quiz to the earliest time found in future quizzes.
+                    endOfNextQuiz = endOfThisQuiz; //Every iteration of loop compares each quiz to the earliest time found in future quizzes.
                 }
             });
             if (nextQuizId !== undefined) //If a quiz has been found...
@@ -62,7 +62,7 @@ var QuizMngr = /** @class */ (function () {
     };
     QuizMngr.prototype.loadQuestion = function (quizNum, questionNum) {
         var _this = this;
-        this.db.currentQuizCol(quizNum).doc('q' + questionNum).get().then(function (questionDataSnap) {
+        this.db.currentQuestionCol(quizNum).doc('q' + questionNum).get().then(function (questionDataSnap) {
             var questionData = questionDataSnap.data();
             _this.db.questionDoc().set({ questionNumber: questionNum,
                 qText: questionData['qText'],
@@ -76,13 +76,18 @@ var QuizMngr = /** @class */ (function () {
     };
     QuizMngr.prototype.loadDebrief = function (quizNum, questionNum) {
         var _this = this;
-        this.db.currentQuizCol(quizNum).doc('q' + questionNum).get().then(function (questionDataSnap) {
+        this.db.currentQuestionCol(quizNum).doc('q' + questionNum).get().then(function (questionDataSnap) {
             var questionData = questionDataSnap.data();
             _this.db.debriefDoc().set({ questionNumber: questionNum,
                 correct: questionData['correct'],
                 debrief: questionData['debrief'] });
             return true;
         })["catch"](function (error) { return console.log(error); });
+    };
+    QuizMngr.prototype.postAnswer = function (quizNum, uid, questionNum, answer) {
+        var data = {};
+        data['q' + questionNum] = answer;
+        this.db.currentAnswerCol(quizNum).doc(uid).set(data, { merge: true });
     };
     return QuizMngr;
 }());

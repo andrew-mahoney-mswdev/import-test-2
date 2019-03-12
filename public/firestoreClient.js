@@ -1,5 +1,4 @@
-"use strict";
-exports.__esModule = true;
+
 var DB = /** @class */ (function () {
     function DB(firestore) {
         this.firestore = firestore;
@@ -19,4 +18,3 @@ var DB = /** @class */ (function () {
     DB.prototype.tmpDataDoc = function () { return this.quizGameDoc().collection('tmpDataCol').doc('tmpData'); };
     return DB;
 }());
-exports.DB = DB;

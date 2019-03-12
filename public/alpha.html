@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Chirpy Quiz - Alpha</title>
+</head>
+
+<body style="background-color: rgb(222, 222, 222); font-family: Arial, Helvetica, sans-serif; font-size: 20px">
+<p><img src="Chirpy-plus.jpg" style="height:50px">
+<div style="font-size: 30px;">Quiz - Alpha test environment (for Chirpy testers)</div></p>
+
+<style>
+    .stamped {background: #f1c40f;}
+</style>
+<script src="selector.js"></script>
+
+<table><tr><td>
+        <div id="questionText">Please wait...</div><br>
+        <div id="answers0" onclick="answerSelect(0)"></div><br>
+        <div id="answers1" onclick="answerSelect(1)"></div><br>
+        <div id="answers2" onclick="answerSelect(2)"></div><br>
+        <div id="answers3" onclick="answerSelect(3)"></div><br>
+    </td><td>
+        <div><img id="image" /></div><br>
+    </td></tr>
+</table>
+</div>
+
+<div id="correct"></div><br>
+<div id="debrief"></div><br><br>
+
+<script src="https://www.gstatic.com/firebasejs/5.8.2/firebase.js"></script>
+<script src="firestoreClient.js"></script>
+<script src="alpha.js"></script>
+
+</body>
+</html>

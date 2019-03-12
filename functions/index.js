@@ -27,8 +27,7 @@ exports.onStorageUpload = functions.storage.object().onFinalize(function (object
 //The following functions are called by a client when it determines that the quiz data is out of date.
 //The server will confirm if this is the case, before updating data.
 //If this is not the case, the function call is unnecessary and an error will be logged.
-exports.loadNextQuiz = functions.https.onRequest(function (request, response) {
-    //NOTE: This function will not load the next quiz if it is called after the quiz was due to start. Thus, if all users are late to join the quiz session, then the quiz won't run.
+exports.loadNextQuiz = functions.https.onCall(function (data, context) {
     db.quizGameDoc().collection('quizData').doc('active').get().then(function (quizDocSnap) {
         var quizDoc = quizDocSnap.data();
         var now = Date.now();
@@ -43,9 +42,8 @@ exports.loadNextQuiz = functions.https.onRequest(function (request, response) {
             console.log('loadNextQuiz() function call unnecessary');
         return true;
     })["catch"](function (error) { return console.log(error); });
-    response.send('loadNextQuiz() done'); //TODO: REMOVE THIS - test code only
 });
-exports.updateQuestion = functions.https.onRequest(function (request, response) {
+exports.updateQuestion = functions.https.onCall(function (data, context) {
     quizMngr.getInterval(QuizMngr_2.iType.question).then(function (data) {
         var quizNumber = data['quizNumber'];
         var intervalNumber = data['intervalNumber'];
@@ -59,9 +57,8 @@ exports.updateQuestion = functions.https.onRequest(function (request, response) 
         })["catch"](function (error) { return console.log(error); });
         return true;
     })["catch"](function (error) { return console.log(error); });
-    response.send('updateQuestion() done'); //TODO: REMOVE THIS - test code only
 });
-exports.updateDebrief = functions.https.onRequest(function (request, response) {
+exports.updateDebrief = functions.https.onCall(function (data, context) {
     //This is functionally identical to the method above, but the nested subtle differences make it easier to repeat code than handle repeated code with promises.
     quizMngr.getInterval(QuizMngr_2.iType.debrief).then(function (data) {
         var quizNumber = data['quizNumber'];
@@ -76,5 +73,29 @@ exports.updateDebrief = functions.https.onRequest(function (request, response) {
         })["catch"](function (error) { return console.log(error); });
         return true;
     })["catch"](function (error) { return console.log(error); });
-    response.send('updateDebrief() done'); //TODO: REMOVE THIS - test code only
+});
+exports.submitAnswer = functions.https.onCall(function (data, context) {
+    var quizNum = data['quiz'];
+    var questionNum = data['question'];
+    var answer = data['answer'];
+    if (context.auth) {
+        var uid_1 = context.auth.uid;
+        var questionPromise = quizMngr.getInterval(QuizMngr_2.iType.question);
+        var debriefPromise_1 = quizMngr.getInterval(QuizMngr_2.iType.debrief);
+        questionPromise.then(function (questionInterval) {
+            debriefPromise_1.then(function (debriefInterval) {
+                if (questionInterval['quizNumber'] === quizNum &&
+                    questionInterval['intervalNumber'] === questionNum &&
+                    debriefInterval['intervalNumber'] !== questionNum) {
+                    quizMngr.postAnswer(quizNum, uid_1, questionNum, answer);
+                }
+                else
+                    console.log('Error: submitAnswer() function call invalid');
+                return true;
+            })["catch"](function (error) { return console.log(error); });
+            return true;
+        })["catch"](function (error) { return console.log(error); });
+    }
+    else
+        console.log('Error: submitAnswer() - context.auth is undefined');
 });

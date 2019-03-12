@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Import test</title>
+
+</head>
+<body style="background-color: rgb(222, 222, 222); font-family: Arial, Helvetica, sans-serif; font-size: 20px">
+    <div>
+        <p><img src="Chirpy-plus.jpg" style="height:50px">
+        <div style="font-size: 30px;">Quiz Uploader - Test environment</div></p>
+        <table style="font-size: 16px"><tr>
+            <td>Date and time of quiz:</td>
+            <td><input id="quizTime" type="datetime-local" style="font-size: 15px"></td>
+        </tr><tr>
+            <td>Question length (seconds):</td>
+            <td><input id="questionLength" type="text" style="font-size: 14px" value=60></td>
+        </tr><tr>
+            <td>Debrief length (seconds):</td>
+            <td><input id="debriefLength" type="text" style="font-size: 14px" value=20></td>
+        </tr></table>
+        <p><div id="uploadStatus">No file chosen</div></p>
+        <p><progress id="progressBar" value="0" max="100" style="height: 40px; width:80%">0%</progress></p>
+        <p><button id="uploadButton" type="button" style="height:30px; width:250px; font-size: 20px" onclick="document.getElementById('fileSelector').click()">Upload file</button></p>
+        <p><input id="fileSelector" type="file" accept="image/*, .csv" style="display:none"/></p> <!-- Control is invisible as it has no innerText element, so is triggered from uploadButton. -->
+        <p style="font-size: 16px">You have uploaded:<br>
+        <textarea id="fileList" style="width:80%; height:200px" readonly></textarea></p>
+        <p><u>Instructions</u></p>
+        <p>1. Select a date and time for this quiz.<br>
+        2. Upload all image files.<br>
+        3. Upload the CSV file.</p>
+        <p>You must have quiz administration privileges to upload files.</p>
+    </div>
+</body>
+
+<script src="https://www.gstatic.com/firebasejs/5.8.2/firebase.js"></script>
+<script src="import.js"></script>
+</html>

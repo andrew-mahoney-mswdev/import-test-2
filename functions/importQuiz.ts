@@ -40,7 +40,7 @@ export function importQuiz(csvFilePath : string, db : DB) { //Imports all quiz d
 
                 for (var index = 0; !readcsv.eof(); index++) { //Until the end of the csv string...
                     let question : Question = loadQuestion(readcsv); //load a question,
-                    db.currentQuizCol(quizNum).doc('q' + index).set(question.getAsJSON()); //and write it to the appropriate question number.
+                    db.currentQuestionCol(quizNum).doc('q' + index).set(question.getAsJSON()); //and write it to the appropriate question number.
                 }
 
                 db.tmpDataDoc().get().then(snapshot => { //Get the relevant quiz data saved by the client

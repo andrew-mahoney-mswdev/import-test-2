@@ -15,13 +15,13 @@ export class QuizMngr { //Class contains functions used by index.js for managing
     
         return this.db.quizzesCol().get().then(quizzesSnap => {
             let now = Date.now();
-            let timeOfNextQuiz = 2000000000000; //This creates a Y2.033K problem, we can't find quizzes after 2032.
+            let endOfNextQuiz = 2000000000000; //This creates a Y2.033K problem, we can't find quizzes after 2032.
     
             quizzesSnap.forEach(quizDoc => {
-                let timeOfThisQuiz = quizDoc.get('timeText');
-                if (timeOfThisQuiz > now && timeOfThisQuiz < timeOfNextQuiz) { //The next quiz must start after the current time and before any other quiz that's been found.
+                let endOfThisQuiz = quizDoc.get('sessionTimeout');
+                if (endOfThisQuiz > now && endOfThisQuiz < endOfNextQuiz) { //The next quiz must start after the current time and before any other quiz that's been found.
                     nextQuizId = quizDoc.id;
-                    timeOfNextQuiz = timeOfThisQuiz; //Every iteration of loop compares each quiz to the earliest time found in future quizzes.
+                    endOfNextQuiz = endOfThisQuiz; //Every iteration of loop compares each quiz to the earliest time found in future quizzes.
                 }
             });
     
@@ -67,7 +67,7 @@ export class QuizMngr { //Class contains functions used by index.js for managing
     }
 
     public loadQuestion(quizNum, questionNum) { //Loads relevant question data from the private quizzes collection to the public quizData collection.
-        this.db.currentQuizCol(quizNum).doc('q' + questionNum).get().then(questionDataSnap => {
+        this.db.currentQuestionCol(quizNum).doc('q' + questionNum).get().then(questionDataSnap => {
             let questionData = questionDataSnap.data();
             this.db.questionDoc().set({questionNumber: questionNum,
                 qText: questionData['qText'],
@@ -81,7 +81,7 @@ export class QuizMngr { //Class contains functions used by index.js for managing
     }
 
     public loadDebrief(quizNum, questionNum) {//Loads relevant debrief data from the private quizzes collection to the public quizData collection.
-        this.db.currentQuizCol(quizNum).doc('q' + questionNum).get().then(questionDataSnap => {
+        this.db.currentQuestionCol(quizNum).doc('q' + questionNum).get().then(questionDataSnap => {
             let questionData = questionDataSnap.data();
             this.db.debriefDoc().set({questionNumber: questionNum,
                 correct: questionData['correct'],
@@ -89,5 +89,11 @@ export class QuizMngr { //Class contains functions used by index.js for managing
             return true;
         }).catch(error => console.log(error));
     }
-    
+
+    public postAnswer(quizNum : number, uid : string, questionNum : number, answer : number) {
+        let data = {};
+        data['q' + questionNum] = answer;
+        this.db.currentAnswerCol(quizNum).doc(uid).set(data, {merge: true});
+    }
+
 }

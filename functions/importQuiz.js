@@ -33,7 +33,7 @@ function importQuiz(csvFilePath, db) {
                 db.quizCountDoc().set({ counter: nextNum }); //Increment and write the next value
                 for (var index = 0; !readcsv_1.eof(); index++) { //Until the end of the csv string...
                     var question = loadQuestion(readcsv_1); //load a question,
-                    db.currentQuizCol(quizNum).doc('q' + index).set(question.getAsJSON()); //and write it to the appropriate question number.
+                    db.currentQuestionCol(quizNum).doc('q' + index).set(question.getAsJSON()); //and write it to the appropriate question number.
                 }
                 db.tmpDataDoc().get().then(function (snapshot) {
                     var questionCount = index;

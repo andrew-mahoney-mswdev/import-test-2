@@ -66,3 +66,8 @@ node_modules/
 
 # service account key
 functions/serviceAccountKey.json
+
+# test files
+functions/test.ts
+functions/test.js
+public/test.html

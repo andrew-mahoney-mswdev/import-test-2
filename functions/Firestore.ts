@@ -15,7 +15,8 @@ export class DB { //Class methods return all required references in the forestor
             quizCountDoc() {return this.quizDataCol().doc('quizCount');}
         quizzesCol() {return this.quizGameDoc().collection('quizzes');}
             currentQuizDoc(quizNum: number) {return this.quizzesCol().doc(String(quizNum));}
-                currentQuizCol(quizNum : number) {return this.currentQuizDoc(quizNum).collection('questions');} //TODO: Change to 'questions'
+                currentQuestionCol(quizNum : number) {return this.currentQuizDoc(quizNum).collection('questions');}
+                currentAnswerCol(quizNum : number) {return this.currentQuizDoc(quizNum).collection('answers');}
         //tmpDataCol ref
             tmpDataDoc() {return this.quizGameDoc().collection('tmpDataCol').doc('tmpData');}
 

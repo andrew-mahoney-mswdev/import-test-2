@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Chirpy Quiz - Test</title>
+</head>
+
+<script src="https://www.gstatic.com/firebasejs/5.8.2/firebase.js"></script>
+<script src="firestoreClient.js"></script>
+<script>
+var config = {
+    apiKey: "AIzaSyAEGKP2WfYOKxD8_PSRhNGD9__eb3T2YA4",
+    authDomain: "import-test-2-32c53.firebaseapp.com",
+    databaseURL: "https://import-test-2-32c53.firebaseio.com",
+    projectId: "import-test-2-32c53",
+    storageBucket: "import-test-2-32c53.appspot.com",
+    messagingSenderId: "261167122833"
+};
+
+firebase.initializeApp(config);
+let functions = firebase.functions();
+const firestore = firebase.firestore();
+let storageRef = firebase.storage().ref();
+const db = new DB(firestore);
+
+let loadNextQuiz = functions.httpsCallable('loadNextQuiz');
+let updateQuestion = functions.httpsCallable('updateQuestion');
+let updateDebrief = functions.httpsCallable('updateDebrief');
+let submitAnswer = functions.httpsCallable('submitAnswer');
+
+function Result() {
+    this.answers = [];
+    this.reset = function() {
+        for(index = 0; index < 4; index++) {
+            this.answers[index] = 0;
+        }
+    }
+    this.reset();
+}
+
+let result = new Result();
+let quizNumber, questionNumber;
+
+function sendAnswer(answer) {
+    submitAnswer({quiz: quizNumber, question: questionNumber, answer: answer});
+}
+
+</script>
+
+<body style="background-color: rgb(222, 222, 222); font-family: Arial, Helvetica, sans-serif; font-size: 20px">
+    <div>
+            <p><img src="Chirpy-plus.jpg" style="height:50px">
+            <p><span id="datetime"></span></p>
+
+            <script>
+            setInterval(() => {
+                var dt = new Date();
+                document.getElementById("datetime").innerHTML = dt.toLocaleString();
+            }, 100);
+            </script>
+
+            <div style="font-size: 30px;">Pre-alpha - Test environment (for developers only)</div></p>
+        <table><tr><td>
+            <p>
+                <img id="questionImage" />
+                <div id="qText">qText:</div><br>
+                <div id="image">image:</div><br>
+                <div id="answer0">answer0:</div><br>
+                <div id="answer1">answer1:</div><br>
+                <div id="answer2">answer2:</div><br>
+                <div id="answer3">answer3:</div><br>
+                <div id="questionNumber">questionNumber:</div><br>
+            </p>
+        </td><td>
+            <p>
+                <div id="correct">correct:</div><br>
+                <div id="debrief">debrief:</div><br>
+                <div id="answered0">answered 0:</div><br>
+                <div id="answered1">answered 1:</div><br>
+                <div id="answered2">answered 2:</div><br>
+                <div id="answered3">answered 3:</div><br>
+                <div id="debriefNumber">questionNumber:</div><br>
+            </p>
+            <p>
+                <div id="quizNumber">quizNumber:</div>
+            </p>
+        </td><td>
+            
+            <p>
+                <button type="button" onClick="loadNextQuiz()">loadNextQuiz</button><br>
+                <button type="button" onClick="updateQuestion()">updateQuestion</button><br>
+                <button type="button" onClick="updateDebrief()">updateDebrief</button><br>
+            </p>
+            <p>
+                <button type="button" onClick="sendAnswer(0)">submitAnswer(0)</button><br>
+                <button type="button" onClick="sendAnswer(1)">submitAnswer(1)</button><br>
+                <button type="button" onClick="sendAnswer(2)">submitAnswer(2)</button><br>
+                <button type="button" onClick="sendAnswer(3)">submitAnswer(3)</button><br>
+            </p>
+        </td>
+        </tr></table>
+    </div>
+</body>
+
+<script>
+db.questionDoc().onSnapshot(doc => {
+    questionNumber = doc.data()['questionNumber'];
+    document.getElementById("qText").innerText = "qText: " + doc.data()['qText'];
+    let imageName = doc.data()['image'];
+    document.getElementById("image").innerText = "image: " + imageName;
+    document.getElementById("answer0").innerText = "answer0: " + doc.data()['answer0'];
+    document.getElementById("answer1").innerText = "answer1: " + doc.data()['answer1'];
+    document.getElementById("answer2").innerText = "answer2: " + doc.data()['answer2'];
+    document.getElementById("answer3").innerText = "answer3: " + doc.data()['answer3'];
+    document.getElementById("questionNumber").innerText = "questionNumber: " + questionNumber;
+    
+    document.getElementById("questionImage").src = '';
+    if (imageName != '') {
+        let imagePath = 'images/' + imageName;
+        let imageRef = storageRef.child(imagePath);
+        imageRef.getDownloadURL().then(url => {
+            document.getElementById("questionImage").src = url;
+        }).catch(error => console.log(error));
+    }
+});
+
+db.debriefDoc().onSnapshot(doc => {
+    let debriefQuestion = doc.data()['questionNumber'];
+    document.getElementById("correct").innerText = "correct: " + doc.data()['correct'];
+    document.getElementById("debrief").innerText = "debrief: " + doc.data()['debreif'];
+    document.getElementById("debriefNumber").innerText = "questionNumber: " + debriefQuestion;
+    
+    result.reset();
+    db.currentAnswerCol(quizNumber).get().then(answersSnap => {
+        answersSnap.forEach(user => {
+            let answer = user.data()['q' + debriefQuestion];
+            result.answers[answer]++;
+        });
+
+        document.getElementById("answered0").innerText = "answered 0: " + result.answers[0];
+        document.getElementById("answered1").innerText = "answered 1: " + result.answers[1];
+        document.getElementById("answered2").innerText = "answered 2: " + result.answers[2];
+        document.getElementById("answered3").innerText = "answered 3: " + result.answers[3];
+    });
+});
+
+db.activeDoc().onSnapshot(doc => {
+    quizNumber = doc.data()['quizNumber'];
+    document.getElementById("quizNumber").innerText = "quizNumber: " + quizNumber;
+});
+
+</script>
+
+</html>
