@@ -7,16 +7,26 @@
     <title>Chirpy Quiz - Test</title>
 
 </head>
+
+<style>
+.default {height:40px; width:400px; font-size: 20px};
+</style>
+
 <body style="background-color: rgb(222, 222, 222); font-family: Arial, Helvetica, sans-serif; font-size: 20px">
     <div>
         <p><img src="Chirpy-plus.jpg" style="height:50px">
-        <div style="font-size: 30px;">Chirpy Quiz - Test environment</div></p>
-        <p><a href="import.html">Import UI</a></p>
-        <p><a href="testUsers.html">Test user accounts</a></p>
-        <p><a href="prealpha.html">Pre-alpha UI</a> (for developers only)</p>
-        <p><a href="alpha.html">Alpha UI (for Chirpy testers)</a></p>
+        <div style="font-size: 30px;">Chirpy Games</div></p>
+        <h3 id = "loginState">Please log in with your Chirpy login and password.</h3>
+        <div>
+            <p><input id="txtEmail" type="email" class="default" placeholder="Email"></p>
+            <p><input id="txtPassword" type="password" class="default" placeholder="Password"></p>
+            <p><button id="btnLogin" class="btn btn-action default">Log in</button></p>
+            <p><button id="btnLogout" class="btn btn-action default" hidden>Log out</button></p>
+            <p><button id="btnContinue" class="btn btn-action default" hidden>Continue</button></p>
+        </div>
     </div>
 </body>
 
 <script src="https://www.gstatic.com/firebasejs/5.8.2/firebase.js"></script>
+<script src="indexLogin.js"></script></script>
 </html>

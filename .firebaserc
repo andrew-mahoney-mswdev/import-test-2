@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "import-test-2-32c53"
+    "default": "import-test-2-32c53",
+    "beta development": "quiz-beta-development"
   }
 }

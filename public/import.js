@@ -1,11 +1,11 @@
 // Initialize Firebase
 var config = {
-    apiKey: "AIzaSyAEGKP2WfYOKxD8_PSRhNGD9__eb3T2YA4",
-    authDomain: "import-test-2-32c53.firebaseapp.com",
-    databaseURL: "https://import-test-2-32c53.firebaseio.com",
-    projectId: "import-test-2-32c53",
-    storageBucket: "import-test-2-32c53.appspot.com",
-    messagingSenderId: "261167122833"
+    apiKey: "AIzaSyAtuN1ZO2u_p21R8OC7ZZ4acsEGqvdibqQ",
+    authDomain: "quiz-beta-development.firebaseapp.com",
+    databaseURL: "https://quiz-beta-development.firebaseio.com",
+    projectId: "quiz-beta-development",
+    storageBucket: "quiz-beta-development.appspot.com",
+    messagingSenderId: "246372372773"
 };
 firebase.initializeApp(config);
 var uploadStatus = document.getElementById("uploadStatus");
@@ -16,6 +16,7 @@ var quizTimeSelector = document.getElementById("quizTime");
 var questionLength = document.getElementById("questionLength");
 var debriefLength = document.getElementById("debriefLength");
 var fileList = document.getElementById("fileList");
+var startButton = document.getElementById("startButton");
 function disableUploadButton() {
     //Prevents the upload button from being used during an upload.
     uploadButton.disabled = true;
@@ -87,4 +88,11 @@ fileSelector.onchange = function (event) {
         uploadFile(storageRef, file, csvFile);
     });
     fileSelector.value = ""; //Return the value of the file input control to "" allows the user to select the same file again and still trigger the change event. (May be necessary when changing CSV files.)
+};
+startButton.onclick = function () {
+    var functions = firebase.functions();
+    functions.httpsCallable('loadNextQuiz')();
+    functions.httpsCallable('updateQuestion')();
+    functions.httpsCallable('updateDebrief')();
+    functions.httpsCallable('submitAnswer')(undefined);
 };

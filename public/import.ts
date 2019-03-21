@@ -2,13 +2,13 @@ declare const firebase : any;
 
 // Initialize Firebase
 var config = {
-    apiKey: "AIzaSyAEGKP2WfYOKxD8_PSRhNGD9__eb3T2YA4",
-    authDomain: "import-test-2-32c53.firebaseapp.com",
-    databaseURL: "https://import-test-2-32c53.firebaseio.com",
-    projectId: "import-test-2-32c53",
-    storageBucket: "import-test-2-32c53.appspot.com",
-    messagingSenderId: "261167122833"
-};
+    apiKey: "AIzaSyAtuN1ZO2u_p21R8OC7ZZ4acsEGqvdibqQ",
+    authDomain: "quiz-beta-development.firebaseapp.com",
+    databaseURL: "https://quiz-beta-development.firebaseio.com",
+    projectId: "quiz-beta-development",
+    storageBucket: "quiz-beta-development.appspot.com",
+    messagingSenderId: "246372372773"
+  };
 
 firebase.initializeApp(config);
 
@@ -20,6 +20,7 @@ const quizTimeSelector : HTMLInputElement = document.getElementById("quizTime") 
 const questionLength : HTMLInputElement = document.getElementById("questionLength") as HTMLInputElement;
 const debriefLength : HTMLInputElement = document.getElementById("debriefLength") as HTMLInputElement;
 const fileList : HTMLTextAreaElement = document.getElementById("fileList") as HTMLTextAreaElement;
+const startButton : HTMLButtonElement = document.getElementById("startButton") as HTMLButtonElement;
 
 function disableUploadButton() {
     //Prevents the upload button from being used during an upload.
@@ -110,4 +111,12 @@ fileSelector.onchange = (event : Event) => {
     );
     
     fileSelector.value = ""; //Return the value of the file input control to "" allows the user to select the same file again and still trigger the change event. (May be necessary when changing CSV files.)
+}
+
+startButton.onclick = () => {
+    let functions = firebase.functions();
+    functions.httpsCallable('loadNextQuiz')();
+    functions.httpsCallable('updateQuestion')();
+    functions.httpsCallable('updateDebrief')();
+    functions.httpsCallable('submitAnswer')(undefined);
 }

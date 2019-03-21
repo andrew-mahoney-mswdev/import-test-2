@@ -1,12 +1,12 @@
 //Initialise firebase
 var config = {
-    apiKey: "AIzaSyAEGKP2WfYOKxD8_PSRhNGD9__eb3T2YA4",
-    authDomain: "import-test-2-32c53.firebaseapp.com",
-    databaseURL: "https://import-test-2-32c53.firebaseio.com",
-    projectId: "import-test-2-32c53",
-    storageBucket: "import-test-2-32c53.appspot.com",
-    messagingSenderId: "261167122833"
-};
+    apiKey: "AIzaSyAtuN1ZO2u_p21R8OC7ZZ4acsEGqvdibqQ",
+    authDomain: "quiz-beta-development.firebaseapp.com",
+    databaseURL: "https://quiz-beta-development.firebaseio.com",
+    projectId: "quiz-beta-development",
+    storageBucket: "quiz-beta-development.appspot.com",
+    messagingSenderId: "246372372773"
+  };
 
 firebase.initializeApp(config);
 let functions = firebase.functions();

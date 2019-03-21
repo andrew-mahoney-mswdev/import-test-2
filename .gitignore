@@ -66,6 +66,7 @@ node_modules/
 
 # service account key
 functions/serviceAccountKey.json
+functions/serviceAccountKey-original.json
 
 # test files
 functions/test.ts

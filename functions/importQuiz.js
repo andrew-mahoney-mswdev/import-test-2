@@ -3,7 +3,7 @@ exports.__esModule = true;
 var Question_1 = require("./Question");
 var Readcsv_1 = require("./Readcsv");
 var Storage = require('@google-cloud/storage').Storage;
-var storageBucket = 'import-test-2-32c53.appspot.com';
+var storageBucket = 'quiz-beta-development.appspot.com';
 function loadQuestion(readcsv) {
     var question = new Question_1.Question();
     question.setQText(readcsv.getNextValue());

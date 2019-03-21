@@ -4,7 +4,7 @@ import { Question } from "./Question";
 import { Readcsv } from "./Readcsv";
 
 const {Storage} = require('@google-cloud/storage');
-const storageBucket = 'import-test-2-32c53.appspot.com';
+const storageBucket = 'quiz-beta-development.appspot.com';
 
 function loadQuestion(readcsv) { //Loads question data from one line in a CSV file.
     let question : Question = new Question();
